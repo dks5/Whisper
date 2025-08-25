@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Горячая диктовка с Whisper: Интерактивная инструкция</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Дополнительные стили для улучшения UX */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            user-select: none; /* Запрещаем выделение текста при ресайзе */
+        }
+        /* Стили для активной ссылки в навигации */
+        .nav-link.active {
+            background-color: #1D4ED8; /* bg-blue-700 */
+            color: #EFF6FF; /* text-blue-50 */
+        }
+        /* Стили для блоков кода: убрана горизонтальная прокрутка, добавлен перенос строк */
+        pre {
+            white-space: pre-wrap; /* Включаем перенос строк */
+            word-wrap: break-word;   /* Переносим длинные слова, чтобы избежать горизонтальной прокрутки */
+        }
+        /* Скрытие переполнения для контейнера кода */
+        .code-block {
+            overflow: hidden;
+        }
+        /* Стили для ручки ресайза */
+        .resize-handle {
+            cursor: ns-resize;
+            height: 10px;
+            background-color: #374151; /* bg-gray-700 */
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .resize-handle::after {
+            content: '...';
+            color: #9CA3AF; /* text-gray-400 */
+            font-size: 1.2rem;
+            line-height: 0;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-200">
+
+    <header class="bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <a href="#home" class="text-xl font-bold text-white nav-link-header">Whisper Диктовка</a>
+                <nav class="hidden md:flex space-x-1" id="desktop-nav">
+                    <a href="#home" data-target="home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Главная</a>
+                    <a href="#preparation" data-target="preparation" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Подготовка</a>
+                    <a href="#install-and-run" data-target="install-and-run" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Установка и запуск</a>
+                    <a href="#faq" data-target="faq" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Вопросы</a>
+                </nav>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-300 hover:text-white focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <a href="#home" data-target="home" class="nav-link block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700">Главная</a>
+            <a href="#preparation" data-target="preparation" class="nav-link block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700">Подготовка</a>
+            <a href="#install-and-run" data-target="install-and-run" class="nav-link block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700">Установка и запуск</a>
+            <a href="#faq" data-target="faq" class="nav-link block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700">Вопросы</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8" style="max-width: 1000px;">
+        
+        <section id="home" class="page-section">
+            <div class="bg-gray-800 rounded-lg p-6 shadow-xl">
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Горячая диктовка с Whisper на Windows</h1>
+                <p class="text-lg text-gray-400 mb-6">Удерживаете клавишу — идёт запись. Отпускаете — текст распознаётся и вставляется в активное окно.</p>
+                <div class="border-l-4 border-blue-500 bg-gray-900/50 p-4 rounded-r-lg">
+                    <h3 class="font-semibold text-white">Ключевые возможности:</h3>
+                    <ul class="list-disc list-inside mt-2 text-gray-300 space-y-1">
+                        <li>Простой запуск без Microsoft C++ Build Tools</li>
+                        <li>100% офлайн-режим для полной приватности</li>
+                        <li>Автоматическое определение частоты микрофона</li>
+                        <li>Фоллбек с GPU на CPU, если CUDA недоступна</li>
+                        <li>Интерактивная настройка скрипта прямо на странице</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="preparation" class="page-section hidden">
+            <h2 class="text-2xl font-bold border-b border-gray-700 pb-2 mb-4">1. Необходимое ПО</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-gray-800 rounded-lg">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="p-3 text-left text-sm font-semibold tracking-wider">Компонент</th>
+                            <th class="p-3 text-left text-sm font-semibold tracking-wider">Описание</th>
+                            <th class="p-3 text-left text-sm font-semibold tracking-wider">Ссылка</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <tr>
+                            <td class="p-3 font-medium">Python ≥ 3.10 (x64)</td>
+                            <td class="p-3 text-gray-400">Основа для запуска. <b>Важно:</b> при установке отметьте "Add Python to PATH".</td>
+                            <td class="p-3"><a href="https://www.python.org/downloads/" target="_blank" rel="noopener" class="text-blue-400 hover:underline">python.org</a></td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-medium">Git (опционально)</td>
+                            <td class="p-3 text-gray-400">Удобен для скачивания проектов.</td>
+                            <td class="p-3"><a href="https://git-scm.com" target="_blank" rel="noopener" class="text-blue-400 hover:underline">git-scm.com</a></td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-medium">NVIDIA CUDA (опционально)</td>
+                            <td class="p-3 text-gray-400">Для ускорения распознавания на GPU.</td>
+                            <td class="p-3"><a href="https://developer.nvidia.com/cuda-downloads" target="_blank" rel="noopener" class="text-blue-400 hover:underline">cuda-downloads</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="text-2xl font-bold border-b border-gray-700 pb-2 mb-4 mt-8">2. Создание рабочего окружения</h2>
+            <p class="mb-4 text-gray-300">Выполните этот блок в PowerShell. Он создаст папку <code>C:\whisper_hotkey</code> и настроит в ней изолированное окружение.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="code-block bg-gray-800 rounded-lg shadow-lg">
+                    <div class="relative p-3 border-b border-gray-700 flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-400">PowerShell</span>
+                        <button class="copy-btn p-1.5 rounded-full bg-gray-700 hover:bg-gray-600">
+                            <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                    </div>
+                    <pre class="p-4 text-sm" style="height: 240px;"><code class="language-powershell"># Задаём путь для нашего проекта
+$dir_path = 'C:\whisper_hotkey'
+
+# Проверяем, существует ли папка
+if (-not (Test-Path $dir_path)) {
+    Write-Host "Создаём директорию: $dir_path"
+    mkdir $dir_path | Out-Null
+}
+
+# Переходим в эту папку
+Set-Location $dir_path
+
+# Создаём виртуальное окружение, если его ещё нет
+if (-not (Test-Path '.\venv')) {
+    Write-Host "Создаём виртуальное окружение..."
+    python -m venv venv
+}
+
+# Активируем виртуальное окружение
+Write-Host "Активация виртуального окружения..."
+.\venv\Scripts\Activate.ps1</code></pre>
+                    <div class="resize-handle"></div>
+                </div>
+                <div class="bg-gray-800/50 rounded-lg p-4 h-fit">
+                    <h3 class="font-semibold text-white mb-3">Пояснение к скрипту</h3>
+                    <p class="text-gray-400 mb-3 text-sm">Этот скрипт PowerShell разработан так, чтобы быть безопасным для повторного запуска. Вот ключевые моменты его работы:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-400 text-sm">
+                        <li><b>Проверка наличия директории:</b> Команда <code>Test-Path</code> используется для проверки существования директории. Если директория отсутствует, скрипт её создаёт.</li>
+                        <li><b>Логирование действий:</b> В консоль выводятся сообщения о ходе выполнения каждой операции, что упрощает отслеживание процесса.</li>
+                        <li><b>Надежность:</b> Сценарий гарантирует создание директории и окружения только в случае их отсутствия. При повторном запуске он плавно переходит к активации уже существующего окружения.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold border-b border-gray-700 pb-2 mb-4 mt-8">3. Настройка и генерация скрипта</h2>
+            <p class="mb-4 text-gray-300">Настройте параметры в панели ниже. Код скрипта обновится автоматически. Скопируйте его и сохраните в файл <code>C:\whisper_hotkey\hotkey_whisper.py</code>.</p>
+            
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="cfg">
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="HOTKEY_KEY" class="block text-sm font-medium mb-1 text-gray-300">Клавиша записи</label><input type="text" id="HOTKEY_KEY" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="WHISPER_MODEL" class="block text-sm font-medium mb-1 text-gray-300">Модель Whisper</label><select id="WHISPER_MODEL" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"><option>tiny</option><option>base</option><option selected>small</option><option>medium</option><option>large</option></select></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="LANGUAGE" class="block text-sm font-medium mb-1 text-gray-300">Язык</label><select id="LANGUAGE" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"><option value="ru" selected>ru (Русский)</option><option value="">auto (Авто)</option><option value="en">en (English)</option></select></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="TASK" class="block text-sm font-medium mb-1 text-gray-300">Задача</label><select id="TASK" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"><option value="transcribe" selected>Распознавание</option><option value="translate">Перевод на English</option></select></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="INPUT_DEVICE" class="block text-sm font-medium mb-1 text-gray-300">Устройство ввода</label><input type="text" id="INPUT_DEVICE" placeholder="пусто = по умолчанию" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="MAX_RECORD_SEC" class="block text-sm font-medium mb-1 text-gray-300">Макс. запись, сек</label><input type="number" id="MAX_RECORD_SEC" min="5" max="600" step="1" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="SILENCE_THRESHOLD" class="block text-sm font-medium mb-1 text-gray-300">Порог тишины (0..1)</label><input type="number" id="SILENCE_THRESHOLD" min="0" max="1" step="0.005" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="SILENCE_MARGIN_SEC" class="block text-sm font-medium mb-1 text-gray-300">Запас до/после, сек</label><input type="number" id="SILENCE_MARGIN_SEC" min="0" max="1" step="0.05" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md"><label for="CHUNK_SEC" class="block text-sm font-medium mb-1 text-gray-300">Размер чанка, сек</label><input type="number" id="CHUNK_SEC" min="0.05" max="1.0" step="0.05" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm text-white"></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md flex items-center h-full"><label class="flex items-center text-sm"><input type="checkbox" id="USE_GPU" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600"> <span class="ml-2 text-gray-300">Использовать GPU</span></label></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md flex items-center h-full"><label class="flex items-center text-sm"><input type="checkbox" id="SUPPRESS_HOTKEY" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600"> <span class="ml-2 text-gray-300">Подавлять клавишу</span></label></div>
+                    <div class="bg-gray-900/50 p-3 rounded-md flex items-center h-full"><label class="flex items-center text-sm"><input type="checkbox" id="SILENCE_TRIM" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600"> <span class="ml-2 text-gray-300">Подрезать тишину</span></label></div>
+                </div>
+                 <button onclick="resetDefaults()" class="mt-4 text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-md">Сбросить на стандартные</button>
+            </div>
+
+            <div class="code-block bg-gray-800 rounded-lg shadow-lg mt-6">
+                <div class="relative p-3 border-b border-gray-700 flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-400">hotkey_whisper.py</span>
+                    <button class="copy-btn p-1.5 rounded-full bg-gray-700 hover:bg-gray-600">
+                        <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+                <pre class="p-4 text-sm" style="height: 110px;"><code id="pycode" class="language-python"></code></pre>
+                <div class="resize-handle"></div>
+            </div>
+        </section>
+
+        <section id="install-and-run" class="page-section hidden">
+            <h2 class="text-2xl font-bold border-b border-gray-700 pb-2 mb-4">1. Установка зависимостей и запуск whisper</h2>
+            <p class="mb-4 text-gray-300">После активации окружения выполните команды ниже. Выберите один из двух вариантов для PyTorch (для GPU или CPU).</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4"><span class="font-semibold text-white">1. Обновление pip</span><div class="relative mt-2 bg-gray-900 rounded p-2"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre class="text-sm"><code>pip install --upgrade pip</code></pre></div></div>
+                <div class="bg-gray-800 rounded-lg p-4"><span class="font-semibold text-white">2. PyTorch для GPU (CUDA 12.1)</span><div class="relative mt-2 bg-gray-900 rounded p-2"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre class="text-sm"><code>pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121</code></pre></div></div>
+                <div class="bg-gray-800 rounded-lg p-4"><span class="font-semibold text-white">2. PyTorch только для CPU</span><div class="relative mt-2 bg-gray-900 rounded p-2"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre class="text-sm"><code>pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu</code></pre></div></div>
+                <div class="bg-gray-800 rounded-lg p-4"><span class="font-semibold text-white">3. Основные библиотеки</span><div class="relative mt-2 bg-gray-900 rounded p-2"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre class="text-sm"><code>pip install openai-whisper sounddevice keyboard pyperclip</code></pre></div></div>
+            </div>
+
+            <h2 class="text-2xl font-bold border-b border-gray-700 pb-2 mb-4 mt-8">2. Повторный запуск Whisper</h2>
+            <p class="mb-4 text-gray-300">При повторном использовании вам достаточно просто активировать уже существующее окружение. После того как вы один раз установили зависимости, они навсегда остаются в папке <code>venv</code>. Для этого нужно:</p>
+            <div class="space-y-3">
+                <p class="text-gray-300">1. Откройте PowerShell и перейдите в рабочую папку:</p>
+                <div class="relative bg-gray-800 rounded-lg p-4"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre><code>Set-Location C:\whisper_hotkey</code></pre></div>
+                <p class="text-gray-300">2. Активируйте окружение:</p>
+                <div class="relative bg-gray-800 rounded-lg p-4"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre><code>.\venv\Scripts\Activate.ps1</code></pre></div>
+                <p class="text-gray-300">3. Запустите скрипт:</p>
+                <div class="relative bg-gray-800 rounded-lg p-4"><button class="copy-btn absolute top-2 right-2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600"><svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button><pre><code>python hotkey_whisper.py</code></pre></div>
+            </div>
+        </section>
+        
+        <section id="faq" class="page-section hidden">
+            <h2 class="text-2xl font-bold border-b border-gray-700 pb-2 mb-4">3. Частые вопросы и решения</h2>
+            <div class="space-y-4">
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="font-semibold text-white">Клавиша не работает или не подавляется?</h3>
+                    <p class="text-gray-400">Запустите PowerShell "от имени администратора" или отключите опцию "Подавлять клавишу" в настройках скрипта.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="font-semibold text-white">Скрипт медленно работает на CPU?</h3>
+                    <p class="text-gray-400">В настройках выберите модель `base` или `tiny`. Они быстрее, но могут быть менее точными.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg">
+                    <h3 class="font-semibold text-white">Распознаётся пустой текст или речь обрезается?</h3>
+                    <p class="text-gray-400">Попробуйте уменьшить "Порог тишины" (например, до `0.01`) или увеличить "Запас до/после речи".</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- ЛОГИКА НАВИГАЦИИ SPA ---
+        const sections = document.querySelectorAll('.page-section');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        function showSection(targetId) {
+            sections.forEach(section => {
+                section.classList.toggle('hidden', section.id !== targetId);
+            });
+            navLinks.forEach(link => {
+                link.classList.toggle('active', link.dataset.target === targetId);
+            });
+            mobileMenu.classList.add('hidden');
+        }
+
+        function navigate(event) {
+            event.preventDefault();
+            const targetId = event.currentTarget.dataset.target;
+            history.pushState({ section: targetId }, '', `#${targetId}`);
+            showSection(targetId);
+            window.scrollTo(0, 0);
+        }
+
+        window.addEventListener('popstate', (event) => {
+            const targetId = event.state ? event.state.section : 'home';
+            showSection(targetId);
+        });
+        
+        const initialTarget = location.hash.substring(1) || 'home';
+        history.replaceState({ section: initialTarget }, '', `#${initialTarget}`);
+        showSection(initialTarget);
+        
+        navLinks.forEach(link => link.addEventListener('click', navigate));
+        document.querySelectorAll('.nav-link-header').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = 'home';
+                history.pushState({ section: targetId }, '', `#${targetId}`);
+                showSection(targetId);
+                window.scrollTo(0, 0);
+            });
+        });
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // --- ЛОГИКА КОПИРОВАНИЯ ---
+        document.querySelectorAll('.copy-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const btn = e.currentTarget;
+                const pre = btn.closest('.code-block, .relative').querySelector('pre');
+                if (pre) {
+                    navigator.clipboard.writeText(pre.innerText).then(() => {
+                        const originalContent = btn.innerHTML;
+                        btn.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                        setTimeout(() => { btn.innerHTML = originalContent; }, 2000);
+                    });
+                }
+            });
+        });
+
+        // --- ЛОГИКА RESIZE ДЛЯ БЛОКОВ КОДА ---
+        document.querySelectorAll('.resize-handle').forEach(handle => {
+            let preElement;
+            let startY;
+            let startHeight;
+
+            function onMouseMove(e) {
+                const dy = e.clientY - startY;
+                preElement.style.height = `${startHeight + dy}px`;
+            }
+
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            handle.addEventListener('mousedown', (e) => {
+                preElement = handle.previousElementSibling;
+                startY = e.clientY;
+                startHeight = parseInt(document.defaultView.getComputedStyle(preElement).height, 10);
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+
+        // --- ЛОГИКА ИНТЕРАКТИВНОГО ГЕНЕРАТОРА СКРИПТА ---
+        const defaults = {
+            HOTKEY_KEY: 'f9', SUPPRESS_HOTKEY: true, MAX_RECORD_SEC: 60, WHISPER_MODEL: 'small',
+            USE_GPU: true, LANGUAGE: 'ru', TASK: 'transcribe', INPUT_DEVICE: '',
+            CHUNK_SEC: 0.2, SILENCE_TRIM: true, SILENCE_THRESHOLD: 0.015, SILENCE_MARGIN_SEC: 0.15
+        };
+        
+        function pyBool(v) { return v ? 'True' : 'False'; }
+        function pyString(v) { return v ? `'${v}'` : 'None'; }
+        function pyInputDevice(v) {
+            if (!v) return 'None';
+            const n = Number(v);
+            return Number.isFinite(n) && String(n) === v ? v : `'${v.replace(/'/g, "\\'")}'`;
+        }
+        
+        function getCfg() {
+            return Object.keys(defaults).reduce((acc, key) => {
+                const el = document.getElementById(key);
+                if (el) {
+                    if (el.type === 'checkbox') acc[key] = el.checked;
+                    else if (el.type === 'number') acc[key] = Number(el.value) || defaults[key];
+                    else acc[key] = el.value.trim();
+                }
+                return acc;
+            }, {});
+        }
+
+        function generateCode() {
+            const c = getCfg();
+            const fullCode = `import time, threading, queue
+import numpy as np
+import sounddevice as sd
+import keyboard
+import pyperclip
+import whisper
+import torch
+
+try:
+    import torchaudio.functional as AF
+except ImportError:
+    AF = None
+
+try:
+    import winsound
+    HAVE_WINSOUND = True
+except ImportError:
+    HAVE_WINSOUND = False
+
+#####################################################################
+# НАСТРОЙКИ
+HOTKEY_KEY = '${c.HOTKEY_KEY.replace(/'/g, "\\'")}'
+SUPPRESS_HOTKEY = ${pyBool(c.SUPPRESS_HOTKEY)}
+MAX_RECORD_SEC = ${c.MAX_RECORD_SEC}
+WHISPER_MODEL = '${c.WHISPER_MODEL}'
+USE_GPU = ${pyBool(c.USE_GPU)}
+LANGUAGE = ${pyString(c.LANGUAGE)}
+TASK = '${c.TASK}'
+INPUT_DEVICE = ${pyInputDevice(c.INPUT_DEVICE)}
+CHUNK_SEC = ${c.CHUNK_SEC}
+SILENCE_TRIM = ${pyBool(c.SILENCE_TRIM)}
+SILENCE_THRESHOLD = ${c.SILENCE_THRESHOLD}
+SILENCE_MARGIN_SEC = ${c.SILENCE_MARGIN_SEC}
+#####################################################################
+
+device = 'cuda' if (USE_GPU and torch.cuda.is_available()) else 'cpu'
+if USE_GPU and device != 'cuda':
+    print('⚠️ CUDA не найдена. Скрипт будет использовать CPU.')
+
+print(f"Загрузка модели '{WHISPER_MODEL}' на {device.upper()}...")
+model = whisper.load_model(WHISPER_MODEL, device=device)
+print("Модель загружена. Готов к работе.")
+
+_recording = False
+_audio_queue = queue.Queue()
+_stop_event = threading.Event()
+_state_lock = threading.Lock()
+_processing_lock = threading.Lock()
+
+def beep(kind='start'):
+    if not HAVE_WINSOUND: return
+    tones = {'start': (880, 120), 'stop': (660, 120), 'ok': (1200, 120), 'err': (330, 220)}
+    f, d = tones.get(kind, (750, 80))
+    try: winsound.Beep(f, d)
+    except Exception: pass
+
+def get_input_samplerate(device=None):
+    try:
+        info = sd.query_devices(device, 'input')
+        return int(info['default_samplerate'])
+    except Exception:
+        return 16000
+
+def record_audio(q, stop_event, sr, device):
+    try:
+        block_size = max(1, int(sr * CHUNK_SEC))
+        with sd.InputStream(samplerate=sr, channels=1, dtype='float32', device=device, blocksize=block_size) as stream:
+            start_t = time.time()
+            while not stop_event.is_set() and (time.time() - start_t) < MAX_RECORD_SEC:
+                data, _ = stream.read(block_size)
+                q.put(data.reshape(-1).copy())
+    except Exception as e:
+        q.put(('__ERROR__', str(e)))
+
+def process_and_transcribe(audio_queue, sr_in):
+    if not _processing_lock.acquire(blocking=False): 
+        print("ℹ️ Предыдущая обработка еще не завершена.")
+        return
+    try:
+        chunks, err = [], None
+        while not audio_queue.empty():
+            item = audio_queue.get_nowait();
+            if isinstance(item, tuple) and item[0] == '__ERROR__': err = item[1]; break
+            chunks.append(item)
+        
+        if err: print(f'❌ Аудио ошибка: {err}'); beep('err'); return
+        if not chunks: print('ℹ️ Ничего не записано.'); return
+        
+        audio = np.concatenate(chunks, axis=0)
+        
+        if SILENCE_TRIM and audio.size > 0:
+            win_size = int(0.05 * sr_in)
+            if win_size == 0: win_size = 1
+            env = np.convolve(np.abs(audio), np.ones(win_size)/win_size, 'same')
+            mask = env >= SILENCE_THRESHOLD
+            if np.any(mask):
+                idx = np.where(mask)[0]
+                start = max(0, idx[0] - int(SILENCE_MARGIN_SEC * sr_in))
+                end = min(audio.size, idx[-1] + int(SILENCE_MARGIN_SEC * sr_in))
+                audio = audio[start:end]
+            else: audio = np.array([], dtype=np.float32)
+
+        if audio.size < 200: print('ℹ️ Запись слишком короткая после удаления тишины.'); return
+        
+        if sr_in != 16000:
+            target_sr = 16000
+            if AF:
+                tensor = torch.from_numpy(audio).unsqueeze(0)
+                audio = AF.resample(tensor, sr_in, target_sr).squeeze(0).numpy()
+            else:
+                n_out = int(round(audio.size * (target_sr / float(sr_in))))
+                x_old = np.linspace(0.0, 1.0, num=audio.size)
+                x_new = np.linspace(0.0, 1.0, num=n_out)
+                audio = np.interp(x_new, x_old, audio)
+        
+        print('🛠 Распознаём...')
+        result = model.transcribe(audio.astype(np.float32), fp16=(device == 'cuda'), language=LANGUAGE, task=TASK)
+        text = result.get('text', '').strip()
+
+        if text:
+            pyperclip.copy(text)
+            keyboard.write(text)
+            print('🔤 Результат:', text)
+            beep('ok')
+        else:
+            print('ℹ️ Распознан пустой результат.')
+
+    except Exception as e:
+        print(f'❌ Ошибка обработки: {e}'); beep('err')
+    finally:
+        _processing_lock.release()
+
+def start_recording(_event=None):
+    global _recording, _audio_queue, _stop_event
+    with _state_lock:
+        if _recording: return
+        _recording = True
+        _audio_queue = queue.Queue()
+        _stop_event = threading.Event()
+        sr_in = get_input_samplerate(INPUT_DEVICE)
+        
+        threading.Thread(target=record_audio, args=(_audio_queue, _stop_event, sr_in, INPUT_DEVICE), daemon=True).start()
+        print(f'▶️ Запись...')
+        beep('start')
+
+def stop_recording(_event=None):
+    with _state_lock:
+        if not _recording: return
+        _recording = False
+    
+    _stop_event.set()
+    beep('stop')
+    
+    sr_in = get_input_samplerate(INPUT_DEVICE)
+    threading.Thread(target=process_and_transcribe, args=(_audio_queue, sr_in), daemon=True).start()
+
+def main():
+    print('--- Горячая диктовка с Whisper ---')
+    print(f'Удерживайте "{HOTKEY_KEY.upper()}" для записи')
+    
+    keyboard.on_press_key(HOTKEY_KEY, start_recording, suppress=SUPPRESS_HOTKEY)
+    keyboard.on_release_key(HOTKEY_KEY, stop_recording, suppress=SUPPRESS_HOTKEY)
+
+    try:
+        while True: time.sleep(1)
+    except KeyboardInterrupt:
+        print('\\nЗавершение работы...')
+    finally:
+        keyboard.unhook_all()
+
+if __name__ == '__main__':
+    main()
+`;
+            document.getElementById('pycode').textContent = fullCode;
+        }
+
+        window.resetDefaults = function() {
+            Object.keys(defaults).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) {
+                    if (el.type === 'checkbox') el.checked = defaults[key];
+                    else el.value = defaults[key];
+                }
+            });
+            generateCode();
+        }
+
+        document.getElementById('cfg').addEventListener('input', generateCode);
+        resetDefaults();
+    });
+    </script>
+</body>
+</html>
