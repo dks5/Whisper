@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="ru" class="scroll-smooth">
+
+<head>
+    <meta charset="utf-8">
+    <title>Горячая диктовка с Whisper: Установка и Запуск</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Начало блока пользовательских CSS-стилей */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        :root {
+          --bg-primary: #0a0a0a;
+          --bg-secondary: #111111;
+          --bg-card: #1a1a1a;
+          --bg-hover: #252525;
+          --text-primary: #e5e5e5;
+          --text-secondary: #a3a3a3;
+          --text-muted: #737373;
+          --accent: #3b82f6;
+          --accent-hover: #2563eb;
+          --accent-glow: rgba(59, 130, 246, 0.5);
+          --success: #10b981;
+          --warn: #ffc107;
+          --err: #f85149;
+          --border: #262626;
+        }
+        /* Стили для полосы прокрутки */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: #404040 #1a1a1a;
+        }
+        *::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        *::-webkit-scrollbar-track {
+          background: #1a1a1a;
+        }
+        *::-webkit-scrollbar-thumb {
+          background-color: #404040;
+          border-radius: 4px;
+        }
+        /* Стили для тела документа и шрифтов */
+        body {
+          font-family: 'Inter', sans-serif;
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
+          background-image:
+            radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+        }
+        code, pre {
+          font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Стили для навигации */
+        .nav-btn {
+          position: relative;
+          overflow: hidden;
+          transition: all 300ms ease;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .nav-btn.active {
+          background: var(--accent);
+          color: white;
+          border-color: var(--accent);
+          box-shadow: 0 0 20px var(--accent-glow);
+        }
+        
+        /* Стили для карточек */
+        .card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 1.5rem;
+          transition: all 300ms ease;
+        }
+        .card:hover {
+          background: var(--bg-hover);
+          border-color: var(--accent);
+          box-shadow: 0 0 30px rgba(59, 130, 246, 0.1);
+          transform: translateY(-2px);
+        }
+        /* Стили для блоков кода */
+        .code-block {
+          position: relative;
+          background: #0d1117;
+          border: 1px solid #30363d;
+          border-radius: 8px;
+          overflow: hidden;
+          margin: 1rem 0;
+        }
+        .code-block pre {
+          margin: 0;
+          padding: 1rem;
+          overflow-x: auto;
+          color: #e6edf3;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+        }
+        .code-block code {
+          font-size: 0.875rem;
+          line-height: 1.6;
+        }
+        /* Подсветка синтаксиса */
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .function { color: #d2a8ff; }
+
+        /* Кнопка копирования */
+        .copy-btn {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text-secondary);
+          padding: 0.25rem 0.75rem;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          transition: all 200ms ease;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          cursor: pointer;
+        }
+        .copy-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          color: var(--text-primary);
+          transform: translateY(-1px);
+        }
+        .copy-btn.copied {
+          background: var(--success);
+          color: white;
+          border-color: var(--success);
+        }
+
+        /* Анимации */
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+          animation: fadeInUp 0.6s ease forwards;
+          opacity: 0;
+        }
+        .fade-in:nth-child(1) { animation-delay: 0.1s; }
+        .fade-in:nth-child(2) { animation-delay: 0.2s; }
+        .fade-in:nth-child(3) { animation-delay: 0.3s; }
+        
+        /* Градиентный текст */
+        .gradient-text {
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        /* Эффект свечения */
+        .hero-glow::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+          opacity: 0.3;
+          z-index: -1;
+          filter: blur(60px);
+        }
+
+        /* Стили для таблиц */
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.97rem; }
+        th, td { border: 1px solid var(--border); padding: 10px 12px; vertical-align: top; }
+        th { background: #1a1a1a; text-align: left; }
+        
+    </style>
+</head>
+
+<body>
+    <!-- НАЧАЛО: Обновленная навигационная панель -->
+    <div class="sticky top-0 z-50 backdrop-blur-md bg-black/50 border-b border-white/10">
+        <header class="max-w-6xl mx-auto px-4 py-4 md:py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="#setup" class="text-2xl md:text-3xl font-bold">
+                    <span class="gradient-text">Whisper Hotkey</span>
+                </a>
+                <nav id="desktop-nav-links" class="flex gap-2 md:gap-3">
+                    <a href="#setup" data-target="setup" class="nav-link nav-btn px-4 py-2 rounded-full text-sm font-medium">Подготовка</a>
+                    <a href="#script" data-target="script" class="nav-link nav-btn px-4 py-2 rounded-full text-sm font-medium">Настройка</a>
+                    <a href="#launch" data-target="launch" class="nav-link nav-btn px-4 py-2 rounded-full text-sm font-medium">Запуск</a>
+                </nav>
+            </div>
+        </header>
+    </div>
+    <!-- КОНЕЦ: Обновленная навигационная панель -->
+    
+    <!-- НАЧАЛО: Основной контент -->
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        
+        <!-- Hero секция -->
+        <section class="text-center mb-16 relative hero-glow">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 fade-in">
+                Горячая диктовка с <span class="gradient-text">Whisper</span>
+            </h1>
+            <p class="text-xl text-gray-400 fade-in">
+                Ваш персональный ассистент для транскрибации речи по горячей клавише
+            </p>
+            <div class="mt-8 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-sm text-gray-400">Готов к настройке</span>
+                </div>
+            </div>
+        </section>
+        
+        <section id="setup" class="page-section scroll-mt-24 mb-16">
+            <h2 class="text-3xl font-bold mb-6">🚀 Шаг 1: Подготовка</h2>
+            <div class="card fade-in">
+                <h3 class="text-xl font-semibold mb-3">Необходимое ПО</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><b>Python ≥ 3.10 (x64)</b></td>
+                            <td>Для запуска скрипта. <b>Важно:</b> при установке поставьте галочку “Add Python to PATH”.</td>
+                            <td><a href="https://www.python.org/downloads/" target="_blank" rel="noopener" class="text-blue-400 hover:underline">python.org</a></td>
+                        </tr>
+                        <tr>
+                            <td>NVIDIA драйвер + CUDA (опционально)</td>
+                            <td>Если у вас есть совместимая GPU, распознавание будет в разы быстрее.</td>
+                            <td><a href="https://developer.nvidia.com/cuda-downloads/" target="_blank" rel="noopener" class="text-blue-400 hover:underline">cuda-downloads</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3 class="text-xl font-semibold mt-8 mb-3">Установка зависимостей</h3>
+                <p class="text-gray-400 mb-4">Скопируйте и выполните этот блок в терминале PowerShell. Он создаст окружение и установит все необходимые библиотеки.</p>
+                <div class="code-block">
+                    <pre><code><span class="comment"># --- Автоматическая установка ---</span>
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+$dir_path = 'C:\whisper_hotkey'; if (-not (Test-Path $dir_path)) { mkdir $dir_path }; Set-Location $dir_path
+if (-not (Test-Path '.\venv')) { python -m venv venv }
+.\venv\Scripts\Activate.ps1
+pip install --upgrade pip
+$use_gpu = if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { $true } else { $false }
+if ($use_gpu) {
+    Write-Host "Обнаружена NVIDIA GPU. Установка PyTorch с поддержкой CUDA..." -ForegroundColor Green
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+} else {
+    Write-Host "NVIDIA GPU не найдена. Установка CPU-версии PyTorch..." -ForegroundColor Yellow
+    pip install torch torchvision torchaudio
+}
+pip install openai-whisper sounddevice keyboard pyperclip
+Write-Host "`n_ Установка завершена!" -ForegroundColor Cyan</code></pre>
+                    <button class="copy-btn">Копировать</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="script" class="page-section scroll-mt-24 mb-16">
+            <h2 class="text-3xl font-bold mb-6">⚙️ Шаг 2: Настройка скрипта</h2>
+            <p class="text-gray-400 mb-6">Используйте эту панель, чтобы настроить скрипт под себя. Изменения автоматически обновят код Python ниже. После настройки, <b>скопируйте его и сохраните</b> в файл <code>C:\whisper_hotkey\hotkey_whisper.py</code>.</p>
+        
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="cfg">
+                <!-- Конфигурационные карточки -->
+                <div class="card"><label for="HOTKEY_KEY" class="block text-sm font-medium text-gray-300 mb-2">Клавиша записи</label><input type="text" id="HOTKEY_KEY" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                <div class="card"><label for="WHISPER_MODEL" class="block text-sm font-medium text-gray-300 mb-2">Модель Whisper</label><select id="WHISPER_MODEL" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"><option value="tiny">tiny</option><option value="base">base</option><option value="small">small</option><option value="medium">medium</option><option value="large-v2">large-v2</option><option value="large-v3">large-v3</option></select></div>
+                <div class="card"><label for="LANGUAGE" class="block text-sm font-medium text-gray-300 mb-2">Язык</label><select id="LANGUAGE" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"><option value="ru">Русский</option><option value="">Авто</option><option value="en">English</option></select></div>
+                <div class="card"><label for="TASK" class="block text-sm font-medium text-gray-300 mb-2">Задача</label><select id="TASK" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"><option value="transcribe">Распознавание</option><option value="translate">Перевод</option></select></div>
+                <div class="card"><label for="SILENCE_THRESHOLD" class="block text-sm font-medium text-gray-300 mb-2">Порог тишины</label><input type="number" id="SILENCE_THRESHOLD" min="0" max="1" step="0.005" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                <div class="card"><label for="SILENCE_MARGIN_SEC" class="block text-sm font-medium text-gray-300 mb-2">Запас тишины, сек</label><input type="number" id="SILENCE_MARGIN_SEC" min="0" max="1" step="0.05" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                <div class="card"><label for="INPUT_DEVICE" class="block text-sm font-medium text-gray-300 mb-2">Устройство ввода</label><input type="text" id="INPUT_DEVICE" placeholder="пусто = по умолчанию" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                <div class="card"><label for="MAX_RECORD_SEC" class="block text-sm font-medium text-gray-300 mb-2">Макс. запись, сек</label><input type="number" id="MAX_RECORD_SEC" min="5" max="600" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                <div class="card col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="flex items-center"><input type="checkbox" id="SUPPRESS_HOTKEY" class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"><label for="SUPPRESS_HOTKEY" class="ml-2 text-sm text-gray-300">Подавлять клавишу</label></div>
+                    <div class="flex items-center"><input type="checkbox" id="USE_GPU" class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"><label for="USE_GPU" class="ml-2 text-sm text-gray-300">Использовать GPU</label></div>
+                    <div class="flex items-center"><input type="checkbox" id="SILENCE_TRIM" class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"><label for="SILENCE_TRIM" class="ml-2 text-sm text-gray-300">Обрезать тишину</label></div>
+                    <button class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md text-sm transition" onclick="resetDefaults()">Сбросить</button>
+                </div>
+            </div>
+            
+            <div class="code-block mt-6">
+                <pre><code id="pycode"></code></pre>
+                <button class="copy-btn">Копировать</button>
+            </div>
+        </section>
+        
+        <section id="launch" class="page-section scroll-mt-24 mb-16">
+            <h2 class="text-3xl font-bold mb-6">▶️ Шаг 3: Запуск и автоматизация</h2>
+            <div class="card fade-in">
+                <h3 class="text-xl font-semibold mb-3">Ручной запуск (для проверки)</h3>
+                <p class="text-gray-400 mb-4">Убедитесь, что всё работает, запустив скрипт вручную в PowerShell.</p>
+                <div class="code-block">
+                    <pre><code><span class="comment"># 1. Перейдите в рабочую папку</span>
+cd C:\whisper_hotkey
+<span class="comment"># 2. Активируйте окружение</span>
+.\venv\Scripts\Activate.ps1
+<span class="comment"># 3. Запустите скрипт</span>
+python hotkey_whisper.py</code></pre>
+                    <button class="copy-btn">Копировать</button>
+                </div>
+
+                <h3 class="text-xl font-semibold mt-8 mb-3">Автоматизация (рекомендуется)</h3>
+                <p class="text-gray-400 mb-4">Создайте ярлык для запуска диктовки в один клик без видимого окна терминала.</p>
+                <p class="text-gray-300 mb-2 font-semibold">1. Создайте файл <code>start_whisper.ps1</code></p>
+                <p class="text-gray-400 mb-4">В папке <code>C:\whisper_hotkey</code> создайте файл <code>start_whisper.ps1</code> с этим кодом:</p>
+                <div class="code-block">
+                    <pre><code># Скрипт для быстрого запуска Whisper Hotkey
+$ErrorActionPreference = "Stop" # Останавливать скрипт при ошибке
+$script_dir = "C:\whisper_hotkey"
+$venv_path = Join-Path $script_dir "venv\Scripts\Activate.ps1"
+$python_script_path = Join-Path $script_dir "hotkey_whisper.py"
+try {
+    if (-not (Test-Path $script_dir)) { throw "Директория проекта '$script_dir' не найдена!" }
+    Set-Location $script_dir
+    Write-Host "Переход в $script_dir" -ForegroundColor Green
+    if (-not (Test-Path $venv_path)) { throw "Скрипт активации виртуального окружения не найден по пути: $venv_path" }
+    . $venv_path
+    Write-Host "Виртуальное окружение активировано." -ForegroundColor Green
+
+    # 🆕 Спрашиваем пользователя, нужно ли обновлять pip.
+    Write-Host "Доступна новая версия pip." -ForegroundColor Yellow
+    Write-Host "Нажмите любую другую клавишу для пропуска." -ForegroundColor DarkGray
+    $confirm_update = Read-Host "Обновить pip? (Д/Y - Да / Н/N - Нет)"
+    if ($confirm_update -match '^[дДyY]') {
+        Write-Host "Обновление pip..." -ForegroundColor Green
+        python -m pip install --upgrade pip
+    } else {
+        Write-Host "Обновление pip пропущено." -ForegroundColor Red
+    }
+
+    if (-not (Test-Path $python_script_path)) { throw "Основной Python-скрипт '$python_script_path' не найден! Вернитесь на вкладку 2 и сохраните его." }
+    Write-Host "Запуск скрипта диктовки Whisper... Нажмите Ctrl+C в этом окне, чтобы остановить." -ForegroundColor Cyan
+    python $python_script_path
+} catch {
+    Write-Host "`n[ОШИБКА ЗАПУСКА]" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host "`nСкрипт не смог запуститься. Убедитесь, что все файлы на месте и установка прошла успешно."
+    Read-Host "Нажмите Enter для выхода..."
+}
+
+</code></pre>
+                    <button class="copy-btn">Копировать</button>
+                </div>
+
+                <p class="text-gray-300 mt-6 mb-2 font-semibold">2. Создайте ярлык на рабочем столе</p>
+                <p class="text-gray-400 mb-4">ПКМ на рабочем столе → Создать → Ярлык. В поле "Расположение объекта" вставьте:</p>
+                <div class="code-block">
+                    <pre><code>powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\whisper_hotkey\start_whisper.ps1"</code></pre>
+                    <button class="copy-btn">Копировать</button>
+                </div>
+                 <div class="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p class="text-sm text-green-300">
+                        <strong>🎉 Готово!</strong> Теперь двойной клик по ярлыку запустит скрипт в фоновом режиме.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- КОНЕЦ: Основной контент -->
+
+    <script>
+        // --- Логика генератора Python скрипта ---
+        const defaults = { HOTKEY_KEY: 'f9', SUPPRESS_HOTKEY: true, MAX_RECORD_SEC: 60, WHISPER_MODEL: 'small', USE_GPU: true, LANGUAGE: 'ru', TASK: 'transcribe', INPUT_DEVICE: '', CHUNK_SEC: 0.2, SILENCE_TRIM: true, SILENCE_THRESHOLD: 0.015, SILENCE_MARGIN_SEC: 0.15 };
+        const template=`import os,sys,time,threading,queue,numpy as np,sounddevice as sd,keyboard,pyperclip,whisper,torch
+try:import torchaudio.functional as AF
+except ImportError:AF=None
+try:import winsound;HAVE_WINSOUND=True
+except ImportError:HAVE_WINSOUND=False
+try:import urllib.request
+except ImportError:raise RuntimeError("urllib.request is required for downloading models.")
+
+HOTKEY_KEY='__HOTKEY_KEY__';SUPPRESS_HOTKEY=__SUPPRESS_HOTKEY__;MAX_RECORD_SEC=__MAX_RECORD_SEC__;WHISPER_MODEL='__WHISPER_MODEL__';USE_GPU=__USE_GPU__;LANGUAGE=__LANGUAGE__;TASK='__TASK__';INPUT_DEVICE=__INPUT_DEVICE__;CHUNK_SEC=__CHUNK_SEC__;SILENCE_TRIM=__SILENCE_TRIM__;SILENCE_THRESHOLD=__SILENCE_THRESHOLD__;SILENCE_MARGIN_SEC=__SILENCE_MARGIN_SEC__
+
+_MODELS={"tiny":"https://openaipublic.azureedge.net/main/whisper/models/65147644a518d12f04e32d6f3b26facc3f8dd46e5390956a9424a650c0ce22b9/tiny.pt","base":"https://openaipublic.azureedge.net/main/whisper/models/ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e/base.pt","small":"https://openaipublic.azureedge.net/main/whisper/models/9ecf779972d90ba49c06d968637d720dd632c55bbf19d441fb42bf17a411e794/small.pt","medium":"https://openaipublic.azureedge.net/main/whisper/models/345ae4da62f9b3d59415adc60127b97c714f32e89e936602e85993674d08dcb1/medium.pt","large-v2":"https://openaipublic.azureedge.net/main/whisper/models/81f7c96c852ee8a3a4ac32b870acd623df44a6936de5a16ae1719b0318991443/large-v2.pt", "large-v3":"https://openaipublic.azureedge.net/main/whisper/models/e5b1a55b89c1367d665e5e4c4b5fde2f6c06e4ab8b355b2732128fc51585c54c/large-v3.pt"}
+
+def _download_reporthook(block_num, block_size, total_size):
+    if total_size > 0:
+        percent = 100.0 * block_num * block_size / total_size
+        bar_length = 40
+        filled_len = int(round(bar_length * percent / 100.0))
+        bar = '█' * filled_len + '-' * (bar_length - filled_len)
+        sys.stdout.write(f'\\rЗагрузка модели: |{bar}| {percent:.1f}%')
+        sys.stdout.flush()
+
+if WHISPER_MODEL in _MODELS:
+    url = _MODELS[WHISPER_MODEL]
+    download_root = os.path.join(os.path.expanduser("~"), ".cache", "whisper")
+    os.makedirs(download_root, exist_ok=True)
+    download_target = os.path.join(download_root, os.path.basename(url))
+    if not os.path.exists(download_target):
+        print(f"Модель '{WHISPER_MODEL}' не найдена. Начинаю загрузку...")
+        try:
+            urllib.request.urlretrieve(url, download_target, reporthook=_download_reporthook)
+            sys.stdout.write('\\n')
+            print("✅ Загрузка завершена.")
+        except Exception as e:
+            print(f"\\n❌ Не удалось загрузить модель: {e}")
+            if os.path.exists(download_target): os.remove(download_target)
+            sys.exit(1)
+
+device='cuda' if(USE_GPU and torch.cuda.is_available())else'cpu'
+if USE_GPU and device!='cuda':print('⚠️ CUDA не найдена. Скрипт будет использовать CPU.')
+
+model_container={};_load_task=lambda:model_container.update(model=whisper.load_model(WHISPER_MODEL,device=device));load_thread=threading.Thread(target=_load_task);load_thread.start();chars="⢿⣻⣽⣾⣷⣯⣟⡿";i=0;msg=f"Инициализация модели '{WHISPER_MODEL}' в {device.upper()}..."
+while load_thread.is_alive():sys.stdout.write(f'\\r{chars[i%len(chars)]} {msg}');sys.stdout.flush();time.sleep(0.1);i+=1
+sys.stdout.write('\\r' + ' '*(len(msg)+5)+'\\r');load_thread.join();model=model_container.get('model')
+if model:print("✅ Модель загружена. Готов к работе.")
+else:print("❌ Не удалось загрузить модель в память.");sys.exit(1)
+
+_recording=False;_audio_queue=None;_stop_event=None;_record_thr=None;_sr_in=None;_state_lock=threading.Lock()
+def beep(kind='start'):
+    if not HAVE_WINSOUND:return
+    try:tones={'start':(880,120),'stop':(660,120),'ok':(1200,120),'err':(330,220)};f,d=tones.get(kind,(750,80));winsound.Beep(f,d)
+    except Exception:pass
+def get_input_samplerate(device=None):
+    try:info=sd.query_devices(device,'input');sr=int(info['default_samplerate']);return sr if sr>0 else 16000
+    except Exception:return 16000
+def record_to_queue(q,stop_event,sr,device=None):
+    try:
+        block_size=max(1,int(sr*CHUNK_SEC))
+        with sd.InputStream(samplerate=sr,channels=1,dtype='float32',device=device,blocksize=block_size) as stream:
+            start_t=time.time()
+            while not stop_event.is_set()and(time.time()-start_t)<MAX_RECORD_SEC:
+                data,overflowed=stream.read(block_size)
+                if overflowed:print('⚠️ Обнаружено переполнение буфера аудиоввода!')
+                q.put(data.reshape(-1).copy())
+    except Exception as e:q.put(('__ERROR__',str(e)))
+def trim_silence(wave,sr):
+    if wave.size==0 or not SILENCE_TRIM:return wave
+    win=max(1,int(0.05*sr));
+    if win>=wave.size:return wave
+    env=np.convolve(np.abs(wave),np.ones(win)/win,mode='same');mask=env>=SILENCE_THRESHOLD
+    if not np.any(mask):return np.array([],dtype=np.float32)
+    idx=np.where(mask)[0];start=max(0,idx[0]-int(SILENCE_MARGIN_SEC*sr));end=min(wave.size,idx[-1]+int(SILENCE_MARGIN_SEC*sr));return wave[start:end]
+def resample_to_16k(wave,sr):
+    target_sr=16000;
+    if sr==target_sr:return wave.astype(np.float32,copy=False)
+    if AF is not None:tensor=torch.from_numpy(wave).unsqueeze(0);resampled=AF.resample(tensor,sr,target_sr);return resampled.squeeze(0).cpu().numpy().astype(np.float32)
+    n_out=int(round(wave.size*(target_sr/float(sr))));
+    if n_out<=0:return np.array([],dtype=np.float32)
+    x_old=np.linspace(0.0,1.0,num=wave.size);x_new=np.linspace(0.0,1.0,num=n_out);return np.interp(x_new,x_old,wave).astype(np.float32)
+def start_recording(_event=None):
+    global _recording,_audio_queue,_stop_event,_record_thr,_sr_in
+    with _state_lock:
+        if _recording:return
+        _recording=True;_sr_in=get_input_samplerate(INPUT_DEVICE);_audio_queue=queue.Queue();_stop_event=threading.Event()
+        _record_thr=threading.Thread(target=record_to_queue,args=(_audio_queue,_stop_event,_sr_in,INPUT_DEVICE),daemon=True)
+        print(f'▶️ Запись... (устройство: {INPUT_DEVICE or "default"}, {_sr_in} Гц)');beep('start');_record_thr.start()
+def stop_recording(_event=None):
+    global _recording
+    with _state_lock:
+        if not _recording:return
+        _stop_event.set()
+    if _record_thr and _record_thr.is_alive():_record_thr.join(timeout=1.5)
+    beep('stop');chunks=[];err=None
+    while not _audio_queue.empty():
+        item=_audio_queue.get_nowait()
+        if isinstance(item,tuple)and item[0]=='__ERROR__':err=item[1]
+        else:chunks.append(item)
+    _recording=False
+    if err:print(f'❌ Аудио ошибка: {err}');beep('err');return
+    if not chunks:print('ℹ️ Ничего не записано.');return
+    audio=np.concatenate(chunks,axis=0);audio=trim_silence(audio,_sr_in)
+    if audio.size<200:print('ℹ️ Запись слишком короткая после удаления тишины.');return
+    audio16k=resample_to_16k(audio,_sr_in)
+    try:
+        print('🛠 Распознаём...');result=model.transcribe(audio16k,fp16=(device=='cuda'),language=LANGUAGE,task=TASK);text=(result.get('text')or'').strip()
+        if text:print('🔤 Результат:',text);pyperclip.copy(text);keyboard.write(text);beep('ok')
+        else:print('ℹ️ Распознан пустой результат.')
+    except Exception as e:print(f'❌ Ошибка распознавания: {e}');beep('err')
+def main():
+    print('--- Горячая диктовка с Whisper ---')
+    print(f'\\033[94mМодель: {WHISPER_MODEL} | Устройство: {device.upper()} | Язык: {LANGUAGE or "auto"} | Задача: {TASK}\\033[0m')
+    print(f'--- Удерживайте "{HOTKEY_KEY.upper()}" для записи ---')
+    keyboard.on_press_key(HOTKEY_KEY,start_recording,suppress=SUPPRESS_HOTKEY)
+    keyboard.on_release_key(HOTKEY_KEY,stop_recording,suppress=SUPPRESS_HOTKEY)
+    try:
+        while True:time.sleep(1)
+    except KeyboardInterrupt:print('\\nЗавершение работы...')
+    finally:keyboard.unhook_all()
+if __name__=='__main__':main()`;
+        
+        function pyBool(v){return v?'True':'False'} function pyString(v){return v?`'${v}'`:'None'}
+        function pyInputDevice(v){if(!v)return'None';const n=Number(v);return Number.isFinite(n)&&String(n)===v?v:`'${v.replace(/'/g,"\\'")}'`}
+        function getCfg(){let c={};for(const k in defaults){const el=document.getElementById(k);if(el)c[k]=el.type==='checkbox'?el.checked:(el.type==='number'?Number(el.value):el.value.trim())}return c}
+        function generateCode(){const c=getCfg();let code=template.replace('__HOTKEY_KEY__',c.HOTKEY_KEY.replace(/'/g,"\\'")).replace('__SUPPRESS_HOTKEY__',pyBool(c.SUPPRESS_HOTKEY)).replace('__MAX_RECORD_SEC__',String(c.MAX_RECORD_SEC)).replace('__WHISPER_MODEL__',c.WHISPER_MODEL).replace('__USE_GPU__',pyBool(c.USE_GPU)).replace('__LANGUAGE__',pyString(c.LANGUAGE)).replace("__TASK__",c.TASK).replace('__INPUT_DEVICE__',pyInputDevice(c.INPUT_DEVICE)).replace('__CHUNK_SEC__',String(c.CHUNK_SEC)).replace('__SILENCE_TRIM__',pyBool(c.SILENCE_TRIM)).replace('__SILENCE_THRESHOLD__',String(c.SILENCE_THRESHOLD)).replace('__SILENCE_MARGIN_SEC__',String(c.SILENCE_MARGIN_SEC));document.getElementById('pycode').textContent=code}
+        function resetDefaults(){for(const key in defaults){const el=document.getElementById(key);if(el)el.type==='checkbox'?el.checked=defaults[key]:el.value=defaults[key]}generateCode()}
+        
+        document.addEventListener('DOMContentLoaded',()=>{
+            const cfgForm=document.getElementById('cfg');
+            if(cfgForm){cfgForm.addEventListener('input',generateCode);cfgForm.addEventListener('change',generateCode);resetDefaults()}
+            
+            // --- Логика для нового дизайна ---
+            // Утилита для копирования
+            const copyToClipboard = async (text) => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch { // Фоллбэк для сред без navigator.clipboard (например, iframe)
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try { document.execCommand('copy'); return true; } 
+                    catch { return false; } 
+                    finally { document.body.removeChild(textarea); }
+                }
+            };
+
+            // Обработчик для кнопок копирования
+            document.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('copy-btn')) {
+                    const btn = e.target;
+                    const code = btn.parentElement.querySelector('code').textContent;
+                    if (await copyToClipboard(code)) {
+                        const originalText = btn.textContent;
+                        btn.textContent = '✓ Скопировано';
+                        btn.classList.add('copied');
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                            btn.classList.remove('copied');
+                        }, 2000);
+                    }
+                }
+            });
+
+            // Плавная прокрутка и подсветка активной навигационной ссылки
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section[id]');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        const offset = 100; // Смещение для липкого хедера
+                        const top = targetSection.offsetTop - offset;
+                        window.scrollTo({ top: top, behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // Отслеживание скролла для подсветки навигации
+            const observerOptions = { rootMargin: '-20% 0px -70% 0px' };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.id;
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                        });
+                    }
+                });
+            }, observerOptions);
+            sections.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>
+
