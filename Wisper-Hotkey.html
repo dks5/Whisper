@@ -310,26 +310,52 @@ python hotkey_whisper.py</code></pre>
                 <h3 class="text-xl font-semibold mt-8 mb-3">Автоматизация (рекомендуется)</h3>
                 <p class="text-gray-400 mb-4">Создайте ярлык для запуска диктовки в один клик без видимого окна терминала.</p>
                 <p class="text-gray-300 mb-2 font-semibold">1. Создайте файл <code>start_whisper.ps1</code></p>
-                <p class="text-gray-400 mb-4">В папке <code>C:\whisper_hotkey</code> создайте файл <code>start_whisper.ps1</code> с этим кодом:</p>
+                <p class="text-gray-400 mb-4">В папке <code>C:\whisper_hotkey</code> создайте файл <code>run.ps1</code> с этим кодом:</p>
                 <div class="code-block">
                     <pre><code># Скрипт для быстрого запуска Whisper Hotkey
 $ErrorActionPreference = "Stop" # Останавливать скрипт при ошибке
 $script_dir = "C:\whisper_hotkey"
 $venv_path = Join-Path $script_dir "venv\Scripts\Activate.ps1"
 $python_script_path = Join-Path $script_dir "hotkey_whisper.py"
+
 try {
     if (-not (Test-Path $script_dir)) { throw "Директория проекта '$script_dir' не найдена!" }
     Set-Location $script_dir
     Write-Host "Переход в $script_dir" -ForegroundColor Green
+
     if (-not (Test-Path $venv_path)) { throw "Скрипт активации виртуального окружения не найден по пути: $venv_path" }
     . $venv_path
     Write-Host "Виртуальное окружение активировано." -ForegroundColor Green
 
-    # 🆕 Спрашиваем пользователя, нужно ли обновлять pip.
+    # 🆕 Проверяем наличие новой версии pip и предлагаем её установить.
     Write-Host "Доступна новая версия pip." -ForegroundColor Yellow
-    Write-Host "Нажмите любую другую клавишу для пропуска." -ForegroundColor DarkGray
-    $confirm_update = Read-Host "Обновить pip? (Д/Y - Да / Н/N - Нет)"
-    if ($confirm_update -match '^[дДyY]') {
+    Write-Host "Нажмите Y или Д для подтверждения обновления, либо дождитесь завершения таймера." -ForegroundColor DarkGray
+
+    # Отображение обратного отсчета
+    $timeout = New-Timespan -Seconds 10
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    while ($sw.Elapsed -le $timeout) {
+        Clear-Host
+        Write-Host "Доступна новая версия pip." -ForegroundColor Yellow
+        Write-Host "Нажмите Y или Д для подтверждения обновления, либо дождитесь завершения таймера." -ForegroundColor DarkGray
+        
+        # Округляем оставшиеся секунды до одного знака после запятой
+        $remainingTime = [Math]::Round(($timeout.TotalSeconds - $sw.Elapsed.TotalSeconds), 1)
+        Write-Host "Оставшееся время: $remainingTime секунд" -ForegroundColor Magenta
+        
+        if ([Console]::KeyAvailable) {
+            $key = [Console]::ReadKey($true)
+            switch ($key.KeyChar.ToUpper()) {
+                'Y' {'Y'}
+                'D' {'Y'}
+                default {}
+            }
+            break
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    if ($key.KeyChar -eq 'Y' -or $key.KeyChar -eq 'D') {
         Write-Host "Обновление pip..." -ForegroundColor Green
         python -m pip install --upgrade pip
     } else {
@@ -353,9 +379,21 @@ try {
                 <p class="text-gray-300 mt-6 mb-2 font-semibold">2. Создайте ярлык на рабочем столе</p>
                 <p class="text-gray-400 mb-4">ПКМ на рабочем столе → Создать → Ярлык. В поле "Расположение объекта" вставьте:</p>
                 <div class="code-block">
-                    <pre><code>powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\whisper_hotkey\start_whisper.ps1"</code></pre>
+                    <pre><code>powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\whisper_hotkey\run.ps1"</code></pre>
                     <button class="copy-btn">Копировать</button>
                 </div>
+ <p class="text-gray-300 mt-6 mb-2 font-semibold">3. Самый простой способ остановить работающую программу — это найти соответствующий процесс в диспетчере задач и принудительно завершить его:</p>
+                <p class="text-gray-400 mb-4">Нажмите сочетание клавиш Ctrl + Shift + Esc, чтобы вызвать диспетчер задач.
+Найдите процесс powershell.exe или pwsh.exe (в зависимости от версии PowerShell).
+Кликните правой кнопкой мыши по процессу и выберите Завершить задачу.</p>
+                 <p class="text-gray-300 mt-6 mb-2 font-semibold">4.  можно создать PowerShell-скрипт без параметроа (-WindowStyle Hidden)</p>
+                <p class="text-gray-400 mb-4">ПКМ на рабочем столе → Создать → Ярлык. В поле "Расположение объекта" вставьте:</p>
+                <div class="code-block">
+                    <pre><code>powershell.exe -ExecutionPolicy Bypass -File "C:\whisper_hotkey\run.ps1"</code></pre>
+                    <button class="copy-btn">Копировать</button>
+                </div>
+
+                
                  <div class="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                     <p class="text-sm text-green-300">
                         <strong>🎉 Готово!</strong> Теперь двойной клик по ярлыку запустит скрипт в фоновом режиме.
