@@ -82,6 +82,9 @@
           border-radius: 12px;
           padding: 1.5rem;
           transition: all 300ms ease;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
         .card:hover {
           background: var(--bg-hover);
@@ -151,9 +154,6 @@
           animation: fadeInUp 0.6s ease forwards;
           opacity: 0;
         }
-        .fade-in:nth-child(1) { animation-delay: 0.1s; }
-        .fade-in:nth-child(2) { animation-delay: 0.2s; }
-        .fade-in:nth-child(3) { animation-delay: 0.3s; }
         
         /* Градиентный текст */
         .gradient-text {
@@ -181,6 +181,7 @@
         table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.97rem; }
         th, td { border: 1px solid var(--border); padding: 10px 12px; vertical-align: top; }
         th { background: #1a1a1a; text-align: left; }
+        td:first-child { font-weight: 500; color: var(--text-secondary); }
         
     </style>
 </head>
@@ -190,7 +191,7 @@
     <div class="sticky top-0 z-50 backdrop-blur-md bg-black/50 border-b border-white/10">
         <header class="max-w-6xl mx-auto px-4 py-4 md:py-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <a href="#setup" class="text-2xl md:text-3xl font-bold">
+                <a href="#" class="text-2xl md:text-3xl font-bold">
                     <span class="gradient-text">Whisper Hotkey</span>
                 </a>
                 <nav id="desktop-nav-links" class="flex gap-2 md:gap-3">
@@ -206,7 +207,7 @@
     <!-- НАЧАЛО: Основной контент -->
     <main class="max-w-6xl mx-auto px-4 py-12">
         
-        <!-- Hero секция -->
+        <!-- Hero секция (Общая для всех) -->
         <section class="text-center mb-16 relative hero-glow">
             <h1 class="text-4xl md:text-6xl font-bold mb-6 fade-in">
                 Горячая диктовка с <span class="gradient-text">Whisper</span>
@@ -222,7 +223,7 @@
             </div>
         </section>
         
-        <section id="setup" class="page-section scroll-mt-24 mb-16">
+        <section id="setup" class="page-section mb-16">
             <h2 class="text-3xl font-bold mb-6">🚀 Шаг 1: Подготовка</h2>
             <div class="card fade-in">
                 <h3 class="text-xl font-semibold mb-3">Необходимое ПО</h3>
@@ -264,25 +265,91 @@ Write-Host "`n_ Установка завершена!" -ForegroundColor Cyan</c
             </div>
         </section>
         
-        <section id="script" class="page-section scroll-mt-24 mb-16">
+        <section id="script" class="page-section mb-16" style="display: none;">
             <h2 class="text-3xl font-bold mb-6">⚙️ Шаг 2: Настройка скрипта</h2>
             <p class="text-gray-400 mb-6">Используйте эту панель, чтобы настроить скрипт под себя. Изменения автоматически обновят код Python ниже. После настройки, <b>скопируйте его и сохраните</b> в файл <code>C:\whisper_hotkey\hotkey_whisper.py</code>.</p>
         
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="cfg">
-                <!-- Конфигурационные карточки -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4" id="cfg">
                 <div class="card"><label for="HOTKEY_KEY" class="block text-sm font-medium text-gray-300 mb-2">Клавиша записи</label><input type="text" id="HOTKEY_KEY" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
                 <div class="card"><label for="WHISPER_MODEL" class="block text-sm font-medium text-gray-300 mb-2">Модель Whisper</label><select id="WHISPER_MODEL" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"><option value="tiny">tiny</option><option value="base">base</option><option value="small">small</option><option value="medium">medium</option><option value="large-v2">large-v2</option><option value="large-v3">large-v3</option></select></div>
                 <div class="card"><label for="LANGUAGE" class="block text-sm font-medium text-gray-300 mb-2">Язык</label><select id="LANGUAGE" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"><option value="ru">Русский</option><option value="">Авто</option><option value="en">English</option></select></div>
                 <div class="card"><label for="TASK" class="block text-sm font-medium text-gray-300 mb-2">Задача</label><select id="TASK" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"><option value="transcribe">Распознавание</option><option value="translate">Перевод</option></select></div>
+                <div class="card"><label for="MAX_RECORD_SEC" class="block text-sm font-medium text-gray-300 mb-2">Макс. запись, сек</label><input type="number" id="MAX_RECORD_SEC" min="5" max="600" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                
                 <div class="card"><label for="SILENCE_THRESHOLD" class="block text-sm font-medium text-gray-300 mb-2">Порог тишины</label><input type="number" id="SILENCE_THRESHOLD" min="0" max="1" step="0.005" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
                 <div class="card"><label for="SILENCE_MARGIN_SEC" class="block text-sm font-medium text-gray-300 mb-2">Запас тишины, сек</label><input type="number" id="SILENCE_MARGIN_SEC" min="0" max="1" step="0.05" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
+                <div class="card"><label for="CHUNK_SEC" class="block text-sm font-medium text-gray-300 mb-2">Размер чанка, сек</label><input type="number" id="CHUNK_SEC" min="0.1" max="1.0" step="0.05" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
                 <div class="card"><label for="INPUT_DEVICE" class="block text-sm font-medium text-gray-300 mb-2">Устройство ввода</label><input type="text" id="INPUT_DEVICE" placeholder="пусто = по умолчанию" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
-                <div class="card"><label for="MAX_RECORD_SEC" class="block text-sm font-medium text-gray-300 mb-2">Макс. запись, сек</label><input type="number" id="MAX_RECORD_SEC" min="5" max="600" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-md p-2 text-sm"></div>
-                <div class="card col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="flex items-center"><input type="checkbox" id="SUPPRESS_HOTKEY" class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"><label for="SUPPRESS_HOTKEY" class="ml-2 text-sm text-gray-300">Подавлять клавишу</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="USE_GPU" class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"><label for="USE_GPU" class="ml-2 text-sm text-gray-300">Использовать GPU</label></div>
-                    <div class="flex items-center"><input type="checkbox" id="SILENCE_TRIM" class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"><label for="SILENCE_TRIM" class="ml-2 text-sm text-gray-300">Обрезать тишину</label></div>
-                    <button class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md text-sm transition" onclick="resetDefaults()">Сбросить</button>
+                
+                <div class="card items-center"><div class="flex items-center justify-between w-full"><label for="SUPPRESS_HOTKEY" class="text-sm text-gray-300">Подавлять клавишу</label><input type="checkbox" id="SUPPRESS_HOTKEY" class="h-5 w-5 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"></div></div>
+                <div class="card items-center"><div class="flex items-center justify-between w-full"><label for="USE_GPU" class="text-sm text-gray-300">Использовать GPU</label><input type="checkbox" id="USE_GPU" class="h-5 w-5 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"></div></div>
+                <div class="card items-center"><div class="flex items-center justify-between w-full"><label for="SILENCE_TRIM" class="text-sm text-gray-300">Обрезать тишину</label><input type="checkbox" id="SILENCE_TRIM" class="h-5 w-5 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"></div></div>
+                
+                <div class="card lg:col-start-5"><button class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md text-sm transition h-full" onclick="resetDefaults()">Сбросить</button></div>
+            </div>
+
+            <!-- ИЗМЕНЕНИЕ: Добавлен блок с описанием настроек -->
+            <div class="card mt-6">
+                <h3 class="text-xl font-semibold mb-3">📖 Описание настроек</h3>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Параметр</th>
+                                <th>Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Клавиша записи</td>
+                                <td>Клавиша, которую нужно удерживать для записи голоса. Например: <code>f9</code>, <code>ctrl+shift+a</code>.</td>
+                            </tr>
+                            <tr>
+                                <td>Модель Whisper</td>
+                                <td>Версия модели для распознавания. <code>tiny</code> - самая быстрая, но менее точная. <code>large-v3</code> - самая точная, но требует больше ресурсов.</td>
+                            </tr>
+                            <tr>
+                                <td>Язык</td>
+                                <td>Язык, на котором вы говорите. Выбор "Авто" может снизить точность, но позволяет распознавать любой язык.</td>
+                            </tr>
+                            <tr>
+                                <td>Задача</td>
+                                <td>Что делать с речью: "Распознавание" (транскрибация) или "Перевод" (на английский язык).</td>
+                            </tr>
+                             <tr>
+                                <td>Макс. запись, сек</td>
+                                <td>Максимальная длительность одной записи в секундах. Защита от случайного долгого нажатия.</td>
+                            </tr>
+                            <tr>
+                                <td>Порог тишины</td>
+                                <td>Уровень громкости, ниже которого звук считается тишиной. Помогает отсекать фоновый шум.</td>
+                            </tr>
+                            <tr>
+                                <td>Запас тишины, сек</td>
+                                <td>Сколько тишины оставлять в начале и конце записи. Помогает избежать обрезания слов.</td>
+                            </tr>
+                            <tr>
+                                <td>Размер чанка, сек</td>
+                                <td>Технический параметр. Длительность аудиофрагмента, который обрабатывается за один раз. Менять не рекомендуется.</td>
+                            </tr>
+                            <tr>
+                                <td>Устройство ввода</td>
+                                <td>ID или часть имени вашего микрофона. Оставьте пустым для использования устройства по умолчанию.</td>
+                            </tr>
+                            <tr>
+                                <td>Подавлять клавишу</td>
+                                <td>Если включено, нажатие горячей клавиши не будет передаваться другим программам (например, не напечатается буква).</td>
+                            </tr>
+                            <tr>
+                                <td>Использовать GPU</td>
+                                <td>Включите, если у вас есть видеокарта NVIDIA с установленными драйверами CUDA. Значительно ускоряет распознавание.</td>
+                            </tr>
+                            <tr>
+                                <td>Обрезать тишину</td>
+                                <td>Автоматически удаляет тишину из начала и конца вашей записи перед отправкой на распознавание.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
@@ -292,7 +359,7 @@ Write-Host "`n_ Установка завершена!" -ForegroundColor Cyan</c
             </div>
         </section>
         
-        <section id="launch" class="page-section scroll-mt-24 mb-16">
+        <section id="launch" class="page-section mb-16" style="display: none;">
             <h2 class="text-3xl font-bold mb-6">▶️ Шаг 3: Запуск и автоматизация</h2>
             <div class="card fade-in">
                 <h3 class="text-xl font-semibold mb-3">Ручной запуск (для проверки)</h3>
@@ -371,7 +438,6 @@ try {
     Write-Host "`nСкрипт не смог запуститься. Убедитесь, что все файлы на месте и установка прошла успешно."
     Read-Host "Нажмите Enter для выхода..."
 }
-
 </code></pre>
                     <button class="copy-btn">Копировать</button>
                 </div>
@@ -382,7 +448,7 @@ try {
                     <pre><code>powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\whisper_hotkey\run.ps1"</code></pre>
                     <button class="copy-btn">Копировать</button>
                 </div>
- <p class="text-gray-300 mt-6 mb-2 font-semibold">3. Самый простой способ остановить работающую программу — это найти соответствующий процесс в диспетчере задач и принудительно завершить его:</p>
+                 <p class="text-gray-300 mt-6 mb-2 font-semibold">3. Самый простой способ остановить работающую программу — это найти соответствующий процесс в диспетчере задач и принудительно завершить его:</p>
                 <p class="text-gray-400 mb-4">Нажмите сочетание клавиш Ctrl + Shift + Esc, чтобы вызвать диспетчер задач.
 Найдите процесс powershell.exe или pwsh.exe (в зависимости от версии PowerShell).
 Кликните правой кнопкой мыши по процессу и выберите Завершить задачу.</p>
@@ -392,7 +458,6 @@ try {
                     <pre><code>powershell.exe -ExecutionPolicy Bypass -File "C:\whisper_hotkey\run.ps1"</code></pre>
                     <button class="copy-btn">Копировать</button>
                 </div>
-
                 
                  <div class="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                     <p class="text-sm text-green-300">
@@ -536,13 +601,49 @@ if __name__=='__main__':main()`;
             const cfgForm=document.getElementById('cfg');
             if(cfgForm){cfgForm.addEventListener('input',generateCode);cfgForm.addEventListener('change',generateCode);resetDefaults()}
             
-            // --- Логика для нового дизайна ---
-            // Утилита для копирования
+            // --- ИЗМЕНЕНИЕ: Логика для изолированных страниц ---
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.page-section');
+
+            function showSection(targetId, initialLoad = false) {
+                sections.forEach(section => {
+                    const isTarget = section.id === targetId;
+                    if (isTarget) {
+                        section.style.display = 'block';
+                        if (!initialLoad) {
+                            // Применяем анимацию только при клике, а не при первой загрузке
+                            section.classList.add('fade-in');
+                        }
+                    } else {
+                        section.style.display = 'none';
+                        section.classList.remove('fade-in');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.dataset.target === targetId);
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.dataset.target;
+                    showSection(targetId);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+
+            // Показываем первую секцию при загрузке
+            showSection('setup', true);
+
+
+            // --- Логика для кнопок копирования (без изменений) ---
             const copyToClipboard = async (text) => {
                 try {
                     await navigator.clipboard.writeText(text);
                     return true;
-                } catch { // Фоллбэк для сред без navigator.clipboard (например, iframe)
+                } catch { 
                     const textarea = document.createElement('textarea');
                     textarea.value = text;
                     textarea.style.position = 'fixed';
@@ -555,7 +656,6 @@ if __name__=='__main__':main()`;
                 }
             };
 
-            // Обработчик для кнопок копирования
             document.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('copy-btn')) {
                     const btn = e.target;
@@ -571,37 +671,6 @@ if __name__=='__main__':main()`;
                     }
                 }
             });
-
-            // Плавная прокрутка и подсветка активной навигационной ссылки
-            const navLinks = document.querySelectorAll('.nav-link');
-            const sections = document.querySelectorAll('section[id]');
-
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetId = link.getAttribute('href').substring(1);
-                    const targetSection = document.getElementById(targetId);
-                    if (targetSection) {
-                        const offset = 100; // Смещение для липкого хедера
-                        const top = targetSection.offsetTop - offset;
-                        window.scrollTo({ top: top, behavior: 'smooth' });
-                    }
-                });
-            });
-
-            // Отслеживание скролла для подсветки навигации
-            const observerOptions = { rootMargin: '-20% 0px -70% 0px' };
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const id = entry.target.id;
-                        navLinks.forEach(link => {
-                            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
-                        });
-                    }
-                });
-            }, observerOptions);
-            sections.forEach(section => observer.observe(section));
         });
     </script>
 </body>
