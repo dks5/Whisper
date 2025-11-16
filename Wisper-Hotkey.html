@@ -365,12 +365,20 @@ Write-Host "`n_ Установка завершена!" -ForegroundColor Cyan</c
                 <h3 class="text-xl font-semibold mb-3">Ручной запуск (для проверки)</h3>
                 <p class="text-gray-400 mb-4">Убедитесь, что всё работает, запустив скрипт вручную в PowerShell.</p>
                 <div class="code-block">
-                    <pre><code><span class="comment"># 1. Перейдите в рабочую папку</span>
+
+<pre><code><span class="comment"># 1. Перейдите в рабочую папку</span>
 cd C:\whisper_hotkey
-<span class="comment"># 2. Активируйте окружение</span>
+
+<span class="comment"># 2. Разрешите выполнение скриптов (только для этого окна)</span>
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+<span class="comment"># 3. Активируйте окружение</span>
 .\venv\Scripts\Activate.ps1
-<span class="comment"># 3. Запустите скрипт</span>
-python hotkey_whisper.py</code></pre>
+
+<span class="comment"># 4. Запустите скрипт</span>
+<span class="comment"># (Убедитесь, что имя файла 'run_whisper.py' или 'hotkey_whisper.py' верное)</span>
+python run_whisper.py</code></pre>
+
                     <button class="copy-btn">Копировать</button>
                 </div>
 
@@ -379,8 +387,16 @@ python hotkey_whisper.py</code></pre>
                 <p class="text-gray-300 mb-2 font-semibold">1. Создайте файл: <code>run.ps1</code></p>
                 <p class="text-gray-400 mb-4">В папке <code>C:\whisper_hotkey</code> создайте файл <code>run.ps1</code> с этим кодом:</p>
                 <div class="code-block">
-                    <pre><code># Скрипт для быстрого запуска Whisper Hotkey
-$ErrorActionPreference = "Stop" # Останавливать скрипт при ошибке
+                    <pre><code># --- Универсальный скрипт запуска (Чистый PowerShell) ---
+# (Можно вставлять в консоль ИЛИ сохранить в run.ps1 для ярлыка)
+
+# 1. Включаем обход безопасности (только для этого окна)
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# 2. Останавливать скрипт при любой ошибке
+$ErrorActionPreference = "Stop" 
+
+# 3. Пути к файлам
 $script_dir = "C:\whisper_hotkey"
 $venv_path = Join-Path $script_dir "venv\Scripts\Activate.ps1"
 $python_script_path = Join-Path $script_dir "hotkey_whisper.py"
